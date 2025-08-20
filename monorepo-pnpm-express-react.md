@@ -332,6 +332,7 @@ Create `server/package.json`:
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@my-app/shared": "workspace:^",
     "express": "^4.18.2",
     "cors": "^2.8.5", 
     "dotenv": "^16.3.1"
@@ -350,14 +351,18 @@ Create `server/package.json`:
 Install server dependencies:
 
 ```bash
+cd server
 pnpm add express cors dotenv
 pnpm add -D nodemon typescript ts-node @types/node @types/express @types/cors
+cd ..
 ```
 
-**Add shared package as workspace dependency:**
+**⚠️ Note**: The shared package dependency is already included in package.json above. If you need to add it manually:
 
 ```bash 
+cd server
 pnpm add @my-app/shared --workspace
+cd ..
 ```
 
 Create `server/tsconfig.json`:
@@ -485,18 +490,17 @@ cd ..
 Navigate back to root and create client with TypeScript template:
 
 ```bash
-# Ensure you're in the project root
+# Ensure you're in the project root (CRITICAL)
 pwd # Should show your project root path
 
+# Create client from root directory
 pnpm create vite client --template react-ts
 cd client
 pnpm install
-```
 
-**Add shared package as workspace dependency:**
-
-```bash
+# Add shared package as workspace dependency
 pnpm add @my-app/shared --workspace
+cd ..
 ```
 
 Update `client/vite.config.ts` with proxy configuration:
@@ -619,8 +623,11 @@ cd ..
 Build everything:
 
 ```bash
-# Build shared types first (REQUIRED)
+# ALWAYS build shared types first (REQUIRED)
 pnpm --filter @my-app/shared build
+
+# Verify shared package built successfully
+ls shared/dist # Should show compiled files
 
 # Build server
 pnpm --filter server build
@@ -630,6 +637,11 @@ pnpm --filter client build
 
 # Or use the root build script (builds in correct order)
 pnpm build
+
+# Troubleshooting: If server build fails with "Cannot find module '@my-app/shared'"
+# 1. Ensure shared package is built: pnpm --filter @my-app/shared build
+# 2. Reinstall dependencies: pnpm install
+# 3. Check server/package.json includes "@my-app/shared": "workspace:^"
 ```
 
 ## Step 8: Run the Application
@@ -666,10 +678,17 @@ pnpm start
 **Error**: `Cannot find module '@my-app/shared'`
 **Solution**: 
 ```bash
-# Reinstall workspace dependencies
-pnpm install
-# Ensure shared package is built first
+# 1. Ensure shared package is built first
 pnpm --filter @my-app/shared build
+
+# 2. Check that server/package.json includes the dependency
+# Should have: "@my-app/shared": "workspace:^" in dependencies
+
+# 3. Reinstall workspace dependencies
+pnpm install
+
+# 4. If still failing, manually add the dependency:
+cd server && pnpm add @my-app/shared --workspace && cd ..
 ```
 
 ### 3. **TypeScript Import Errors**
@@ -682,7 +701,26 @@ pnpm --filter @my-app/shared build
 
 ### 5. **Nested Directory Creation**
 **Issue**: `pnpm create vite` creates files in wrong location
-**Solution**: Ensure correct working directory before running commands
+**Solution**: 
+```bash
+# Always verify you're in project root before creating client
+pwd # Should show /path/to/your-project-name
+ls # Should show: shared/ server/ package.json pnpm-workspace.yaml
+
+# If in wrong directory, navigate to project root:
+cd /path/to/your-project-name
+```
+
+### 6. **Command Execution in Scripts**
+**Issue**: Commands like `cd server && pnpm install` may fail in some environments
+**Solution**: Use separate commands or full paths:
+```bash
+# Instead of: cd server && pnpm install
+# Use:
+cd server
+pnpm install
+cd ..
+```
 
 ## Project Benefits
 
