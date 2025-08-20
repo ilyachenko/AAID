@@ -202,6 +202,15 @@ Create the shared types structure:
 mkdir -p src/types
 ```
 
+### Shared Types Organization
+
+The shared package organizes types into two categories:
+
+- **`api.ts`** - Business Logic & Domain Types: Contains types specific to your application's business domain (User entities, API responses, domain-specific operations)
+- **`common.ts`** - Reusable Infrastructure Types: Contains generic, reusable types for common patterns (pagination, error handling, HTTP utilities)
+
+This separation allows you to extend `api.ts` with new business entities while reusing `common.ts` patterns across different features.
+
 Create `shared/src/types/api.ts`:
 
 ```typescript
@@ -281,6 +290,27 @@ export const isValidEmail = (email: string): boolean => {
 export const formatDate = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
+```
+
+### Usage Examples
+
+```typescript
+// Import business types (api.ts)
+import type { User, CreateUserRequest } from '@my-app/shared'
+
+// Import infrastructure types (common.ts)  
+import type { PaginatedResponse, ApiError } from '@my-app/shared'
+
+// Combined usage
+const getUsersPaginated = (): PaginatedResponse<User> => {
+  return {
+    data: users,
+    pagination: { page: 1, limit: 10, total: 100, totalPages: 10 }
+  }
+}
+
+// Using utility functions
+import { isValidEmail, formatDate } from '@my-app/shared'
 ```
 
 **Build the shared package (REQUIRED before proceeding):**
