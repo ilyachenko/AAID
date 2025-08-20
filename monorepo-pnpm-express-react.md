@@ -515,7 +515,7 @@ cd ..
 
 ## Step 6: Set Up React Frontend with Vite (TypeScript)
 
-**⚠️ Important**: Run from project root and ensure correct working directory.
+**⚠️ Critical**: Always run pnpm commands from the project root directory unless explicitly told otherwise.
 
 Navigate back to root and create client with TypeScript template:
 
@@ -523,7 +523,7 @@ Navigate back to root and create client with TypeScript template:
 # Ensure you're in the project root (CRITICAL)
 pwd # Should show your project root path
 
-# Create client from root directory
+# Create client from root directory (IMPORTANT: run this from project root)
 pnpm create vite client --template react-ts
 cd client
 pnpm install
@@ -674,7 +674,20 @@ pnpm build
 # 3. Check server/package.json includes "@my-app/shared": "workspace:^"
 ```
 
-## Step 8: Run the Application
+## Step 8: Final Verification and Run
+
+### Verify Setup
+
+Before running the application, verify all packages built successfully:
+
+```bash
+# Verify all packages built successfully
+ls shared/dist server/dist client/dist
+
+# All three directories should exist and contain compiled files
+```
+
+### Run the Application
 
 From the root directory, you can now run both servers simultaneously:
 
@@ -694,6 +707,15 @@ pnpm build
 # Start production server
 pnpm start
 ```
+
+### Test the Complete Setup
+
+1. Run `pnpm dev` to start both servers
+2. Visit `http://localhost:3000` (or the port shown in terminal)
+3. You should see:
+   - Server status information
+   - List of users fetched from the API
+   - No TypeScript errors in the console
 
 ## Common Issues & Solutions
 
