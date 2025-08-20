@@ -4,29 +4,33 @@
 
 ```
 my-fullstack-app/
+├── .gitignore            # Root gitignore
 ├── package.json          # Root package.json for workspace
 ├── pnpm-workspace.yaml   # pnpm workspace configuration
 ├── server/               # Express.js TypeScript backend
+│   ├── .gitignore        # Server-specific gitignore
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── .env              # Environment variables
 │   ├── src/
 │   │   └── server.ts
-│   └── dist/             # Built files
+│   └── dist/             # Built files (ignored by git)
 ├── shared/               # Shared types package
+│   ├── .gitignore        # Shared package gitignore
 │   ├── package.json
 │   ├── tsconfig.json
 │   ├── src/
 │   │   ├── index.ts
 │   │   └── types/
-│   └── dist/             # Built declarations
+│   └── dist/             # Built declarations (ignored by git)
 └── client/               # React frontend
+    ├── .gitignore        # Client gitignore
     ├── package.json
     ├── vite.config.ts
     ├── .env              # Client environment variables
     ├── index.html
     ├── src/
-    └── dist/             # Built assets
+    └── dist/             # Built assets (ignored by git)
 ```
 
 ## Step 1: Initialize the Project
@@ -39,11 +43,41 @@ Create the project directory and initialize pnpm workspace:
 mkdir my-fullstack-app
 cd my-fullstack-app
 
+# Initialize git repository first
+git init
+
 # Initialize root package.json
 pnpm init
 ```
 
-## Step 2: Configure pnpm Workspace
+## Step 2: Configure Git Ignore (Root Level)
+
+Create root `.gitignore` file:
+
+```gitignore
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+```
+
+## Step 3: Configure pnpm Workspace
 
 Create `pnpm-workspace.yaml`:
 
@@ -84,7 +118,7 @@ Install concurrently for running both servers:
 pnpm add -D concurrently -w
 ```
 
-## Step 3: Set Up Shared Types Package
+## Step 4: Set Up Shared Types Package
 
 **⚠️ Build order matters**: Always build shared package first.
 
@@ -93,6 +127,22 @@ Create shared types package:
 ```bash
 mkdir shared
 cd shared
+```
+
+Create `shared/.gitignore`:
+
+```gitignore
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment variables
+.env
 ```
 
 Create `shared/package.json`:
@@ -240,7 +290,7 @@ pnpm build
 cd ..
 ```
 
-## Step 4: Set Up Express.js Backend
+## Step 5: Set Up Express.js Backend
 
 **⚠️ Important**: Choose an available port (avoid common ports like 3000, 5000, 8000).
 
@@ -249,6 +299,22 @@ Create server directory:
 ```bash
 mkdir server
 cd server
+```
+
+Create `server/.gitignore`:
+
+```gitignore
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# TypeScript
+*.tsbuildinfo
 ```
 
 Create `server/package.json`:
@@ -262,7 +328,8 @@ Create `server/package.json`:
     "start": "node dist/server.js",
     "dev": "nodemon src/server.ts", 
     "build": "tsc",
-    "build:watch": "tsc --watch"
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -411,7 +478,7 @@ Navigate back to root:
 cd ..
 ```
 
-## Step 5: Set Up React Frontend with Vite (TypeScript)
+## Step 6: Set Up React Frontend with Vite (TypeScript)
 
 **⚠️ Important**: Run from project root and ensure correct working directory.
 
@@ -545,7 +612,7 @@ Navigate back to root:
 cd ..
 ```
 
-## Step 6: Build and Verify Setup
+## Step 7: Build and Verify Setup
 
 **⚠️ Important**: Build in correct order (shared → server → client).
 
@@ -565,7 +632,7 @@ pnpm --filter client build
 pnpm build
 ```
 
-## Step 7: Run the Application
+## Step 8: Run the Application
 
 From the root directory, you can now run both servers simultaneously:
 
@@ -626,5 +693,5 @@ pnpm --filter @my-app/shared build
 - **Production Ready**: Express serves built React files
 - **Concurrent Development**: All packages can be developed simultaneously
 - **Full TypeScript**: Complete type safety from database to UI
-
-Your full-stack application is now ready for development!
+- **Proper Git Configuration**: Build outputs and sensitive files are properly ignored
+- **Clean Repository**: Only source code and configuration committed to gi
