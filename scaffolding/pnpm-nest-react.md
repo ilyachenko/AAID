@@ -87,9 +87,10 @@ Update root `package.json`:
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client\"",
+    "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client:wait\" --kill-others-on-fail --prefix-colors \"blue,green\" --names \"server,client\"",
     "dev:server": "pnpm --filter server start:dev",
     "dev:client": "pnpm --filter client dev",
+    "dev:client:wait": "wait-on http://localhost:3001/api/health --timeout 30000 && pnpm dev:client",
     "build": "pnpm build:shared && pnpm build:server && pnpm build:client",
     "build:shared": "pnpm --filter @my-app/shared build",
     "build:server": "pnpm --filter server build", 
@@ -100,15 +101,16 @@ Update root `package.json`:
     "clean": "pnpm --filter @my-app/shared clean && pnpm --filter client clean && pnpm --filter server clean"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "wait-on": "^8.2.0"
   }
 }
 ```
 
-Install concurrently for running both servers:
+Install concurrently and wait-on for running both servers with proper startup order:
 
 ```bash
-pnpm add -D concurrently -w
+pnpm add -D concurrently wait-on -w
 ```
 
 ## Step 4: Set Up Shared Types Package
@@ -670,9 +672,11 @@ pnpm dev
 ```
 
 This will start:
-- NestJS server on http://localhost:3001
-- React client on http://localhost:3000
+- NestJS server on http://localhost:3001 (starts first)
+- React client on http://localhost:3000 (waits for server to be ready)
 - Swagger docs on http://localhost:3001/api/docs
+
+**✅ Startup Order Fix**: The `dev` script now uses `wait-on` to ensure the server's health endpoint (`/api/health`) is responding before starting the client. This prevents `ECONNREFUSED` errors that occur when the client tries to connect to the server before it's ready.
 
 ## Useful Commands
 
