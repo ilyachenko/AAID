@@ -97,8 +97,10 @@ Update root `package.json`:
   "private": true,
   "scripts": {
     "dev": "concurrently \"pnpm dev:server\" \"pnpm dev:client\"",
+    "dev:sequential": "pnpm dev:server & pnpm dev:client:wait",
     "dev:server": "pnpm --filter server dev",
     "dev:client": "pnpm --filter client dev",
+    "dev:client:wait": "wait-on http://localhost:3001/api/health && pnpm --filter client dev",
     "build": "pnpm build:shared && pnpm build:server && pnpm build:client",
     "build:shared": "pnpm --filter @my-app/shared build",
     "build:server": "pnpm --filter server build", 
@@ -107,15 +109,16 @@ Update root `package.json`:
     "clean": "pnpm --filter @my-app/shared clean && pnpm --filter client clean && pnpm --filter server clean"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0"
   }
 }
 ```
 
-Install concurrently for running both servers:
+**Install concurrently and wait-on for coordinated server startup:**
 
 ```bash
-pnpm add -D concurrently -w
+pnpm add -D concurrently wait-on -w
 ```
 
 ## Step 4: Set Up Shared Types Package
@@ -292,27 +295,6 @@ export const formatDate = (date: Date): string => {
 };
 ```
 
-### Usage Examples
-
-```typescript
-// Import business types (api.ts)
-import type { User, CreateUserRequest } from '@my-app/shared'
-
-// Import infrastructure types (common.ts)  
-import type { PaginatedResponse, ApiError } from '@my-app/shared'
-
-// Combined usage
-const getUsersPaginated = (): PaginatedResponse<User> => {
-  return {
-    data: users,
-    pagination: { page: 1, limit: 10, total: 100, totalPages: 10 }
-  }
-}
-
-// Using utility functions
-import { isValidEmail, formatDate } from '@my-app/shared'
-```
-
 **Build the shared package (REQUIRED before proceeding):**
 
 ```bash
@@ -347,7 +329,7 @@ node_modules/
 *.tsbuildinfo
 ```
 
-Create `server/package.json`:
+**Create `server/package.json` with enhanced dev script:**
 
 ```json
 {
@@ -356,7 +338,8 @@ Create `server/package.json`:
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "nodemon src/server.ts", 
+    "dev": "nodemon src/server.ts",
+    "dev:wait-ready": "nodemon src/server.ts --signal SIGTERM",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist"
@@ -381,18 +364,8 @@ Create `server/package.json`:
 Install server dependencies:
 
 ```bash
-cd server
 pnpm add express cors dotenv
 pnpm add -D nodemon typescript ts-node @types/node @types/express @types/cors
-cd ..
-```
-
-**⚠️ Note**: The shared package dependency is already included in package.json above. If you need to add it manually:
-
-```bash 
-cd server
-pnpm add @my-app/shared --workspace
-cd ..
 ```
 
 Create `server/tsconfig.json`:
@@ -425,7 +398,7 @@ Create the server source directory and main file:
 mkdir src
 ```
 
-Create `server/src/server.ts`:
+**Create `server/src/server.ts` with startup logging:**
 
 ```typescript
 import express, { Request, Response } from 'express';
@@ -495,8 +468,21 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server ready on port ${PORT}`);
+  console.log(`📡 API endpoints available:`);
+  console.log(`   - GET  http://localhost:${PORT}/api/health`);
+  console.log(`   - GET  http://localhost:${PORT}/api/users`);
+  console.log(`   - POST http://localhost:${PORT}/api/users`);
+});
+
+// Graceful shutdown handling for wait-on compatibility
+process.on('SIGTERM', () => {
+  console.log('📡 Server shutting down gracefully...');
+  server.close(() => {
+    console.log('✅ Server closed');
+    process.exit(0);
+  });
 });
 ```
 
@@ -530,6 +516,51 @@ pnpm install
 
 # Add shared package as workspace dependency
 pnpm add @my-app/shared --workspace
+cd ..
+```
+
+**Update `client/package.json` with wait-on integration:**
+
+```json
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:wait": "wait-on http://localhost:3001/api/health && vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@my-app/shared": "workspace:^",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.0.3",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5",
+    "wait-on": "^7.2.0"
+  }
+}
+```
+
+**Install wait-on in client:**
+
+```bash
+cd client
+pnpm add -D wait-on
 cd ..
 ```
 
@@ -667,66 +698,107 @@ pnpm --filter client build
 
 # Or use the root build script (builds in correct order)
 pnpm build
-
-# Troubleshooting: If server build fails with "Cannot find module '@my-app/shared'"
-# 1. Ensure shared package is built: pnpm --filter @my-app/shared build
-# 2. Reinstall dependencies: pnpm install
-# 3. Check server/package.json includes "@my-app/shared": "workspace:^"
 ```
 
-## Step 8: Final Verification and Run
+## Step 8: Run with Sequential Startup
 
-### Verify Setup
+### Available Development Commands
 
-Before running the application, verify all packages built successfully:
+From the root directory, you now have multiple ways to run the application:
 
+**Option 1: Sequential startup (Recommended)**
 ```bash
-# Verify all packages built successfully
-ls shared/dist server/dist client/dist
-
-# All three directories should exist and contain compiled files
+# Starts server first, waits for it to be ready, then starts client
+pnpm dev:sequential
 ```
 
-### Run the Application
-
-From the root directory, you can now run both servers simultaneously:
-
+**Option 2: Concurrent startup (Original method)**
 ```bash
-# Development mode (runs both client and server)
+# Starts both server and client simultaneously
 pnpm dev
+```
 
-# Run only the server
+**Option 3: Manual control**
+```bash
+# Start server only
 pnpm dev:server
 
-# Run only the client  
+# In another terminal, start client with wait-on
+pnpm dev:client:wait
+
+# Or start client immediately (without waiting)
 pnpm dev:client
-
-# Build for production
-pnpm build
-
-# Start production server
-pnpm start
 ```
+
+### Recommended Workflow
+
+**For development with guaranteed server readiness:**
+
+```bash
+# Use sequential startup to ensure server is ready before client starts
+pnpm dev:sequential
+```
+
+This command will:
+1. Start the Express server in the background
+2. Wait for the server to respond to `http://localhost:3001/api/health`
+3. Once server is confirmed ready, start the Vite dev server
+4. Open your browser to `http://localhost:3000`
 
 ### Test the Complete Setup
 
-1. Run `pnpm dev` to start both servers
-2. Visit `http://localhost:3000` (or the port shown in terminal)
-3. You should see:
+1. Run `pnpm dev:sequential` to start with guaranteed order
+2. You should see output like:
+   ```
+   🚀 Server ready on port 3001
+   📡 API endpoints available:
+      - GET  http://localhost:3001/api/health
+      - GET  http://localhost:3001/api/users  
+      - POST http://localhost:3001/api/users
+   wait-on(7588) waiting for 1 resource: http://localhost:3001/api/health
+   wait-on(7588) complete
+   Local:   http://localhost:3000/
+   Network: http://192.168.1.x:3000/
+   ```
+3. Visit `http://localhost:3000` (or the port shown in terminal)
+4. You should see:
    - Server status information
    - List of users fetched from the API
-   - No TypeScript errors in the console
+   - No connection errors or timeouts
+
+## Benefits of wait-on Integration
+
+1. **Reliable Startup Order**: Client never starts before server is ready
+2. **Eliminates Connection Errors**: No more "ECONNREFUSED" errors during development
+3. **Faster Development**: No manual waiting or browser refreshing needed
+4. **Production-like Behavior**: Mimics production startup sequences
+5. **Flexible Options**: Choose between sequential or concurrent startup based on needs
 
 ## Common Issues & Solutions
 
-### 1. **Port Conflicts**
+### 1. **wait-on Timeout**
+**Error**: `wait-on timeout after 60000ms`
+**Solution**: 
+```bash
+# Check if server port is correct
+curl http://localhost:3001/api/health
+
+# Verify server is starting properly
+pnpm dev:server
+
+# Check for port conflicts
+lsof -i :3001
+```
+
+### 2. **Port Conflicts**
 **Error**: `EADDRINUSE: address already in use`
 **Solution**: Change ports in:
 - `server/.env` 
 - `client/vite.config.ts` proxy target
 - `client/.env` VITE_API_URL
+- Root `package.json` wait-on URL
 
-### 2. **Workspace Dependencies Not Found** 
+### 3. **Workspace Dependencies Not Found** 
 **Error**: `Cannot find module '@my-app/shared'`
 **Solution**: 
 ```bash
@@ -738,50 +810,49 @@ pnpm --filter @my-app/shared build
 
 # 3. Reinstall workspace dependencies
 pnpm install
-
-# 4. If still failing, manually add the dependency:
-cd server && pnpm add @my-app/shared --workspace && cd ..
 ```
 
-### 3. **TypeScript Import Errors**
+### 4. **TypeScript Import Errors**
 **Error**: `'User' is a type and must be imported using a type-only import`
 **Solution**: Use `import type { User } from '@my-app/shared'`
 
-### 4. **JSX Fragment Errors**
-**Error**: `JSX expressions must have one parent element`
-**Solution**: Wrap multiple JSX elements in `<>...</>` or `<div>`
-
-### 5. **Nested Directory Creation**
-**Issue**: `pnpm create vite` creates files in wrong location
-**Solution**: 
+### 5. **Server Not Responding to Health Check**
+**Error**: `wait-on` hangs indefinitely
+**Solution**:
 ```bash
-# Always verify you're in project root before creating client
-pwd # Should show /path/to/your-project-name
-ls # Should show: shared/ server/ package.json pnpm-workspace.yaml
+# Check if health endpoint exists and responds
+curl -v http://localhost:3001/api/health
 
-# If in wrong directory, navigate to project root:
-cd /path/to/your-project-name
+# Verify server logs show startup messages
+# Should see: "🚀 Server ready on port 3001"
+
+# Check server route configuration in server/src/server.ts
+# Ensure: app.get('/api/health', ...)
 ```
 
-### 6. **Command Execution in Scripts**
-**Issue**: Commands like `cd server && pnpm install` may fail in some environments
-**Solution**: Use separate commands or full paths:
+### 6. **Background Process Management**
+**Issue**: Server keeps running after stopping `pnpm dev:sequential`
+**Solution**:
 ```bash
-# Instead of: cd server && pnpm install
-# Use:
-cd server
-pnpm install
-cd ..
+# Kill processes by port
+lsof -ti:3001 | xargs kill -9
+lsof -ti:3000 | xargs kill -9
+
+# Or use process names
+pkill -f "node.*server"
+pkill -f "vite"
 ```
 
-## Project Benefits
+## Production Considerations
 
-- **Monorepo Structure**: Everything in one repository
-- **pnpm Workspaces**: Efficient dependency management
-- **Shared Types Package**: Type safety across frontend and backend
-- **Development Proxy**: Vite proxies API calls to Express server
-- **Production Ready**: Express serves built React files
-- **Concurrent Development**: All packages can be developed simultaneously
-- **Full TypeScript**: Complete type safety from database to UI
-- **Proper Git Configuration**: Build outputs and sensitive files are properly ignored
-- **Clean Repository**: Only source code and configuration committed to gi
+For production deployment, the wait-on dependency is only needed during development. The production build process remains the same:
+
+```bash
+# Production build
+pnpm build
+
+# Start production server (serves both API and static files)
+pnpm start
+```
+
+The production server automatically serves the built React files, so no wait-on coordination is needed.
