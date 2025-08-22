@@ -369,4 +369,4 @@ pnpm start              # Production server
 - ✅ Swagger API documentation
 - ✅ CORS configured
 - ✅ Health check endpoint
-- ✅ Proper startup order (server waits for health check
+- ✅ Proper startup order (server waits for health check)
