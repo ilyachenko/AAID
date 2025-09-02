@@ -1,3 +1,8 @@
+---
+layout: default
+title: Full-Stack Express + React + TypeScript Setup
+---
+
 # Full-Stack Express + React + TypeScript Setup (pnpm workspace)
 
 ## Project Structure

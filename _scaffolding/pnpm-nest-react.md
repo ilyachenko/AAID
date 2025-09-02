@@ -1,3 +1,8 @@
+---
+layout: default
+title: NestJS + React Full-Stack Setup Guide
+---
+
 # NestJS + React Full-Stack Setup Guide
 
 Quick setup for a monorepo with NestJS backend, React frontend, and shared TypeScript types using pnpm workspaces.
@@ -362,11 +367,3 @@ pnpm dev:client         # Client only
 pnpm start              # Production server
 ```
 
-## Features
-- ✅ Monorepo with pnpm workspaces
-- ✅ Shared TypeScript types
-- ✅ Hot reload in development
-- ✅ Swagger API documentation
-- ✅ CORS configured
-- ✅ Health check endpoint
-- ✅ Proper startup order (server waits for health check)

@@ -1,0 +1,34 @@
+# GitHub Pages configuration
+title: AI Agentic Development
+description: Documentation and scaffolding for AI agentic development
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Collections
+collections:
+  scaffolding:
+    output: true
+    permalink: /:collection/:name/
+
+# Navigation
+defaults:
+  - scope:
+      path: ""
+      type: "scaffolding"
+    values:
+      layout: "default"
+
+# Remove footer
+minima:
+  social_links: []
+  
+# Disable footer text
+footer_content: ""
