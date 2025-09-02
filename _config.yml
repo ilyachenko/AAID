@@ -26,9 +26,10 @@ defaults:
     values:
       layout: "default"
 
-# Remove footer
+# Minima theme settings
 minima:
+  skin: auto
   social_links: []
-  
-# Disable footer text
-footer_content: ""
+
+# Hide footer
+show_excerpts: false
