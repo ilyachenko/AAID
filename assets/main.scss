@@ -1,0 +1,63 @@
+---
+---
+
+@import "minima";
+
+.site-footer {
+  display: none !important;
+}
+
+footer {
+  display: none !important;
+}
+
+// Fix excessive spacing in lists - target the p tags causing the issue
+.post-content, .page-content {
+  ol, ul {
+    margin-bottom: 10px !important;
+    
+    li {
+      margin-bottom: 2px !important;
+      
+      // The main culprit: paragraph tags inside list items
+      p {
+        margin-bottom: 0 !important;
+        margin-top: 0 !important;
+      }
+      
+      ol, ul {
+        margin-top: 2px !important;
+        margin-bottom: 5px !important;
+        
+        li {
+          margin-bottom: 1px !important;
+          
+          p {
+            margin-bottom: 0 !important;
+            margin-top: 0 !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+// More specific targeting for content wrapper
+main.page-content {
+  ol, ul {
+    margin-bottom: 10px !important;
+    
+    li {
+      margin-bottom: 2px !important;
+      
+      p {
+        margin: 0 !important;
+      }
+    }
+  }
+}
+
+// Add more spacing around horizontal rules (---)
+hr {
+  margin: 2rem 0 !important;
+}

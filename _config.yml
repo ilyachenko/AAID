@@ -17,12 +17,20 @@ collections:
   scaffolding:
     output: true
     permalink: /:collection/:name/
+  best-practices:
+    output: true
+    permalink: /:collection/:name/
 
 # Navigation
 defaults:
   - scope:
       path: ""
       type: "scaffolding"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "best-practices"
     values:
       layout: "default"
 

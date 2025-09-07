@@ -9,10 +9,11 @@ This is a Jekyll-based GitHub Pages site for "Agentic AI Development" documentat
 **Key Structure:**
 - `_config.yml`: Jekyll configuration with collections enabled
 - `_scaffolding/`: Collection of setup guides (converted to pages via collections)
+- `_best-practices/`: Collection of best practices articles
 - `_layouts/default.html`: Main page layout
 - `_includes/header.html`: Site header with navigation
 - `assets/css/style.scss`: Custom styles extending minima theme
-- `index.md`: Homepage with links to scaffolding guides
+- `index.md`: Homepage with links to both collections
 
 ## Build Commands
 
@@ -30,16 +31,26 @@ bundle exec jekyll build
 
 ## Content Organization
 
-The site uses Jekyll collections for the scaffolding guides:
-- Each `.md` file in `_scaffolding/` becomes a page
-- URL pattern: `/scaffolding/{filename}/`
-- All guides use the default layout
-- Front matter must include `title` and `layout: default`
+The site uses Jekyll collections for content:
 
-## Scaffolding Guides
+**Scaffolding Guides Collection (`_scaffolding/`):**
+- Each `.md` file becomes a page with URL pattern: `/scaffolding/{filename}/`
+- Setup guides for specific technology stacks
 
-Two comprehensive guides are available:
+**Best Practices Collection (`_best-practices/`):**
+- Each `.md` file becomes a page with URL pattern: `/best-practices/{filename}/`
+- General development practices and patterns
 
+All guides use the default layout and require front matter with `title` and `layout: default`.
+
+## Available Content
+
+**Best Practices:**
+1. **CLAUDE.md Maintenance & Documentation Guide** (`_best-practices/claude-md-maintenance.md`)
+   - Best practices for maintaining CLAUDE.md and related documentation
+   - Team-wide consistency and long-term clarity guidelines
+
+**Scaffolding Guides:**
 1. **Express + React + TypeScript** (`_scaffolding/pnpm-express-react.md`)
    - Full pnpm workspace setup with Express backend, React frontend, shared types
    - Key pattern: Build shared types first, then server, then client
@@ -48,7 +59,7 @@ Two comprehensive guides are available:
    - NestJS backend with Swagger docs, React frontend, shared TypeScript types
    - Includes CORS, environment configuration, API documentation
 
-Both follow the same workspace pattern: `server/`, `client/`, `shared/` packages.
+All setup guides follow the same workspace pattern: `server/`, `client/`, `shared/` packages.
 
 ## Theme Configuration
 
@@ -57,3 +68,4 @@ Uses minima theme with:
 - Custom header with theme toggle functionality
 - Footer hidden (`show_excerpts: false`)
 - Social links disabled
+- Do not forget update CLAUDE.md if needed.
